@@ -19,6 +19,6 @@ type MinecraftServer struct {
 type BasicConfig struct {
 	ServerCode     string
 	ServerPassword string
-	Token          string
 	AuthServer     string
+	McpAuthServer  string
 }

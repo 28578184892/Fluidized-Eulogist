@@ -42,8 +42,8 @@ func Eulogist() error {
 			Server.BasicConfig{
 				ServerCode:     config.RentalServerCode,
 				ServerPassword: config.RentalServerPassword,
-				Token:          config.FBToken,
-				AuthServer:     LookUpAuthServerAddress(config.FBToken),
+				AuthServer:     config.AuthServer,
+				McpAuthServer:  config.McpAuthServer,
 			},
 			persistenceData,
 		)

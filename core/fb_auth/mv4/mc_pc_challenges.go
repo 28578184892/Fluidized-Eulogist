@@ -14,7 +14,7 @@ type FNumRequest struct {
 
 // ...
 func TransferData(client *fb_client.Client, content string) string {
-	r, err := client.HttpClient.Get(fmt.Sprintf("%s/api/phoenix/transfer_start_type?content=%s", client.AuthServer, content))
+	r, err := client.HttpClient.Get(fmt.Sprintf("%s/ModEngine/GetStartType?content=%s", client.AuthServer, content))
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +37,7 @@ func TransferCheckNum(client *fb_client.Client, data string) string {
 	if err != nil {
 		panic("Failed to encode json")
 	}
-	r, err := client.HttpClient.Post(fmt.Sprintf("%s/api/phoenix/transfer_check_num", client.AuthServer), "application/json", bytes.NewBuffer(msg))
+	r, err := client.HttpClient.Post(fmt.Sprintf("%s/ModEngine/GetMcpCheckNum", client.AuthServer), "application/json", bytes.NewBuffer(msg))
 	if err != nil {
 		panic(err)
 	}

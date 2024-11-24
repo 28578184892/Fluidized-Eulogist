@@ -11,12 +11,6 @@ const (
 	LaunchTypeNoOperation
 )
 
-// 验证服务器地址
-const (
-	AuthServerAddressFastBuilder = "https://user.fastbuilder.pro"
-	AuthServerAddressLiliya233   = "https://liliya233.uk"
-)
-
 // EulogistConfig 结构体定义了 Eulogist 的配置信息
 type EulogistConfig struct {
 	LaunchType int    `json:"launch_type"`       // 启动类型
@@ -31,7 +25,8 @@ type EulogistConfig struct {
 	RentalServerCode     string `json:"rental_server_code"`     // 网易租赁服编号
 	RentalServerPassword string `json:"rental_server_password"` // 该租赁服对应的密码
 
-	FBToken string `json:"fb_token"`
+	AuthServer    string `json:"auth_server_address"`
+	McpAuthServer string `json:"mcp_auth_server_address"`
 }
 
 // DefaultEulogistConfig 返回一个默认的 EulogistConfig 实例
@@ -39,21 +34,5 @@ func DefaultEulogistConfig() EulogistConfig {
 	return EulogistConfig{
 		LaunchType: LaunchTypeNormal,
 		NEMCPath:   `D:\MCLDownload\MinecraftBENetease\windowsmc\Minecraft.Windows.exe`,
-	}
-}
-
-// LookUpAuthServerAddress 根据令牌查找认证服务器地址
-func LookUpAuthServerAddress(token string) string {
-	if len(token) < 3 {
-		return AuthServerAddressFastBuilder
-	}
-
-	switch token[:3] {
-	case "w9/":
-		return AuthServerAddressFastBuilder
-	case "y8/":
-		return AuthServerAddressLiliya233
-	default:
-		return AuthServerAddressFastBuilder
 	}
 }

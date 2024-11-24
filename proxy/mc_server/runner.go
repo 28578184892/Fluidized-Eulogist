@@ -1,7 +1,6 @@
 package mc_server
 
 import (
-	fbauth "Eulogist/core/fb_auth/mv4"
 	fb_client "Eulogist/core/fb_auth/mv4/client"
 	"Eulogist/core/minecraft/protocol"
 	"Eulogist/core/minecraft/protocol/packet"
@@ -33,13 +32,7 @@ func ConnectToServer(
 		PersistenceData: persistenceData,
 	}
 	// 初始化
-	authenticator := fbauth.NewAccessWrapper(
-		mcServer.fbClient,
-		basicConfig.ServerCode,
-		basicConfig.ServerPassword,
-		basicConfig.Token,
-		"", "",
-	)
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	// 向验证服务器请求信息

@@ -86,8 +86,11 @@ func GenerateEulogistConfig() (config *EulogistConfig, err error) {
 	pterm.Info.Printf("Type your rental server password: ")
 	fmt.Scanln(&cfg.RentalServerPassword)
 
-	pterm.Info.Printf("Type your token of PhoenixBuilder's or Liliya233's Auth Server: ")
-	fmt.Scanln(&cfg.FBToken)
+	pterm.Info.Printf("请输入你的'登录链'验证服务器地址:")
+	fmt.Scanln(&cfg.AuthServer)
+
+	pterm.Info.Printf("请输入你的'Mcp'验证服务器地址:")
+	fmt.Scanln(&cfg.McpAuthServer)
 
 	err = WriteJsonFile("eulogist_config.json", cfg)
 	if err != nil {
