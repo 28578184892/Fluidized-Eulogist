@@ -9,6 +9,7 @@ import (
 type MinecraftServer struct {
 	fbClient              *fb_client.Client
 	authResponse          *fb_client.AuthResponse
+	chainData             string
 	getCheckNumEverPassed bool
 
 	PersistenceData *persistence_data.PersistenceData

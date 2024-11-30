@@ -1,6 +1,7 @@
 package mc_client
 
 import (
+	authenticator "Eulogist/core/fluid_auth"
 	"Eulogist/core/minecraft/protocol/packet"
 	"Eulogist/core/raknet/handshake"
 	"Eulogist/proxy/persistence_data"
@@ -25,7 +26,7 @@ func RunServer(persistenceData *persistence_data.PersistenceData) (
 	// prepare
 	client = &MinecraftClient{PersistenceData: persistenceData}
 	// start listening
-	err = client.CreateListener()
+	err = client.CreateListener(authenticator.ListenPort)
 	if err != nil {
 		return nil, nil, fmt.Errorf("RunServer: %v", err)
 	}

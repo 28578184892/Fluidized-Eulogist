@@ -1,7 +1,6 @@
 package handshake
 
 import (
-	fb_client "Eulogist/core/fb_auth/mv4/client"
 	"Eulogist/core/minecraft/protocol"
 	"Eulogist/core/minecraft/protocol/login"
 	"Eulogist/core/minecraft/protocol/packet"
@@ -25,7 +24,7 @@ import (
 func HandleNetworkSettings(
 	r *raknet_wrapper.Raknet,
 	pk *packet.NetworkSettings,
-	authResponse *fb_client.AuthResponse,
+	authResponse string,
 	skin *skin_process.Skin,
 ) (identityData *login.IdentityData, clientData *login.ClientData, err error) {
 	// 准备

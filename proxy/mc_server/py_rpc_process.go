@@ -39,19 +39,20 @@ func (m *MinecraftServer) OnPyRpc(p *packet.PyRpc) (shouldSendCopy bool, err err
 			break
 		}
 		// 创建请求并发送到认证服务器并获取响应
-		arg, _ := json.Marshal([]any{
-			c.FirstArg,
-			c.SecondArg.Arg,
-			m.PersistenceData.LoginData.PlayerUniqueID,
-		})
-		ret := fbauth.TransferCheckNum(m.fbClient, string(arg))
+
+		ret := fbauth.TransferCheckNum(m.fbClient, c.FirstArg, c.SecondArg.Arg, m.PersistenceData.LoginData.PlayerUniqueID, c.SecondArg.FirstExtraData)
 		// 解码响应并调整数据
+
 		ret_p := []any{}
+
 		json.Unmarshal([]byte(ret), &ret_p)
+		fmt.Println("解码：", ret_p)
+
 		if len(ret_p) > 7 {
 			ret6, ok := ret_p[6].(float64)
 			if ok {
 				ret_p[6] = int64(ret6)
+				fmt.Println("处理了：", ret_p[6])
 			}
 		}
 		// 完成零知识证明(挑战)

@@ -1,5 +1,10 @@
 package Eulogist
 
+import (
+	authenticator "Eulogist/core/fluid_auth"
+	"strconv"
+)
+
 // NetEaseConfig 结构体定义了一个可以允许
 // Minecraft 客户端自动进入特定服务器地址的配置文件字段
 type NetEaseConfig struct {
@@ -41,11 +46,14 @@ type Misc struct {
 
 // DefaultNetEaseConfig 函数返回一个默认的 NetEaseConfig 实例
 func DefaultNetEaseConfig() NetEaseConfig {
+
+	port, _ := strconv.Atoi(authenticator.ListenPort)
+
 	return NetEaseConfig{
-		RoomInfo: RoomInfo{IP: "127.0.0.1", Port: 19132},
+		RoomInfo: RoomInfo{IP: "127.0.0.1", Port: port},
 		PlayerInfo: PlayerInfo{
 			UserID:   -1,
-			UserName: "Eulogist",
+			UserName: "Fluidized-Eulogist",
 			Urs:      "***",
 		},
 		Misc: Misc{MultiplayerGameType: 100},

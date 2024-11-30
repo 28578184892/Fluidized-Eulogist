@@ -73,12 +73,12 @@ func (m *MinecraftServer) FiltePacketsAndSendCopy(
 				modUUIDs := make([]any, 0)
 				outfitInfo := make(map[string]int64, 0)
 				// 设置数据
-				for modUUID, outfitType := range m.PersistenceData.BotComponent {
-					modUUIDs = append(modUUIDs, modUUID)
-					if outfitType != nil {
-						outfitInfo[modUUID] = int64(*outfitType)
-					}
-				}
+				// for modUUID, outfitType := range m.PersistenceData.BotComponent {
+				// 	modUUIDs = append(modUUIDs, modUUID)
+				// 	if outfitType != nil {
+				// 		outfitInfo[modUUID] = int64(*outfitType)
+				// 	}
+				// }
 				// 组件处理
 				m.Conn.WriteSinglePacket(raknet_wrapper.MinecraftPacket{
 					Packet: &packet.PyRpc{

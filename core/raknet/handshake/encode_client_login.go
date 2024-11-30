@@ -1,7 +1,7 @@
 package handshake
 
 import (
-	fb_client "Eulogist/core/fb_auth/mv4/client"
+	authenticator "Eulogist/core/fluid_auth"
 	"Eulogist/core/minecraft/protocol"
 	"Eulogist/core/minecraft/protocol/login"
 	"Eulogist/core/tools/skin_process"
@@ -19,7 +19,7 @@ import (
 // 它使用提供的身份验证响应、
 // 客户端密钥和皮肤信息生成登录请求数据包
 func EncodeLogin(
-	authResponse *fb_client.AuthResponse,
+	authResponse string,
 	clientKey *ecdsa.PrivateKey,
 	skin *skin_process.Skin,
 ) (
@@ -32,14 +32,14 @@ func EncodeLogin(
 
 	// 设置默认的身份和客户端数据
 	defaultIdentityData(&identity)
-	defaultClientData(&client, authResponse, skin)
+	defaultClientData(&client, skin)
 
 	// 我们以 Android 设备登录，这将在 JWT 链中的 titleId 字段中显示。
 	// 这些字段无法被编辑，而我们也仅仅是强制以 Android 数据进行登录
 	setAndroidData(&client)
 
 	// 编码登录请求
-	request = login.Encode(authResponse.ChainInfo, client, clientKey)
+	request = login.Encode(authResponse, client, clientKey)
 	// 解析身份数据以确保其有效
 	identity, client, _, err = login.Parse(request)
 	if err != nil {
@@ -67,15 +67,14 @@ func defaultIdentityData(data *login.IdentityData) {
 // 为所有未更改的字段设置默认值
 func defaultClientData(
 	d *login.ClientData,
-	authResponse *fb_client.AuthResponse,
 	skin *skin_process.Skin,
 ) {
 	rand.Seed(time.Now().Unix())
 
-	d.ServerAddress = authResponse.RentalServerIP
+	d.ServerAddress = authenticator.ServerIP
 	d.DeviceOS = protocol.DeviceAndroid
 	d.GameVersion = protocol.CurrentVersion
-	d.GrowthLevel = authResponse.BotLevel // Netease
+	d.GrowthLevel = 0 // Netease
 	d.ClientRandomID = rand.Int63()
 	d.DeviceID = uuid.New().String()
 	d.LanguageCode = "zh_CN" // Netease

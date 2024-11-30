@@ -2,11 +2,11 @@ package mc_server
 
 import (
 	fb_client "Eulogist/core/fb_auth/mv4/client"
+	authenticator "Eulogist/core/fluid_auth"
 	"Eulogist/core/minecraft/protocol"
 	"Eulogist/core/minecraft/protocol/packet"
 	"Eulogist/core/raknet/handshake"
 	raknet_wrapper "Eulogist/core/raknet/wrapper"
-	"Eulogist/core/tools/skin_process"
 	"Eulogist/proxy/persistence_data"
 	"context"
 	"crypto/ecdsa"
@@ -38,26 +38,27 @@ func ConnectToServer(
 	// 向验证服务器请求信息
 	clientKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	armoured_key, _ := x509.MarshalPKIXPublicKey(&clientKey.PublicKey)
-	authResponse, err := authenticator.GetAccess(ctx, armoured_key)
+	authResponse, err := authenticator.MakeAuthentication(ctx, armoured_key)
 	if err != nil {
 		return nil, fmt.Errorf("ConnectToServer: %v", err)
 	}
 	// 设置皮肤信息
-	if len(authResponse.BotSkin.SkinDownloadURL) > 0 {
-		mcServer.PersistenceData.SkinData.NeteaseSkin = new(skin_process.Skin)
-		err = skin_process.GetSkinFromAuthResponse(authResponse, mcServer.PersistenceData.SkinData.NeteaseSkin)
-		if err != nil {
-			return nil, fmt.Errorf("ConnectToServer: %v", err)
-		}
-	}
+	// if len(authResponse.BotSkin.SkinDownloadURL) > 0 {
+	// 	mcServer.PersistenceData.SkinData.NeteaseSkin = new(skin_process.Skin)
+	// 	err = skin_process.GetSkinFromAuthResponse(authResponse, mcServer.PersistenceData.SkinData.NeteaseSkin)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("ConnectToServer: %v", err)
+	// 	}
+	// }
 	// 连接到服务器
-	connection, err := raknet.DialContext(ctx, authResponse.RentalServerIP)
+	connection, err := raknet.DialContext(ctx, authenticator.ServerIP)
 	if err != nil {
 		return nil, fmt.Errorf("ConnectToServer: %v", err)
 	}
 	// 同步数据
-	mcServer.PersistenceData.BotComponent = authResponse.BotComponent
-	mcServer.authResponse = authResponse
+	//mcServer.PersistenceData.BotComponent = authResponse.BotComponent
+	//mcServer.authResponse = authResponse
+	mcServer.chainData = authResponse
 	mcServer.Conn = raknet_wrapper.NewRaknet()
 	// 设置底层连接并启动数据包解析
 	mcServer.Conn.SetConnection(connection, clientKey)
@@ -97,7 +98,7 @@ func (m *MinecraftServer) FinishHandshake() error {
 			switch p := pk.Packet.(type) {
 			case *packet.NetworkSettings:
 				m.PersistenceData.LoginData.Server.IdentityData, m.PersistenceData.LoginData.Server.ClientData, err = handshake.HandleNetworkSettings(
-					m.Conn, p, m.authResponse, m.PersistenceData.SkinData.NeteaseSkin,
+					m.Conn, p, m.chainData, m.PersistenceData.SkinData.NeteaseSkin,
 				)
 				if err != nil {
 					return fmt.Errorf("FinishHandshake: %v", err)

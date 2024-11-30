@@ -1,16 +1,12 @@
 package Eulogist
 
 import (
-	"Eulogist/core/tools/skin_process"
 	Client "Eulogist/proxy/mc_client"
 	Server "Eulogist/proxy/mc_server"
 	"Eulogist/proxy/persistence_data"
 	"fmt"
-	"os"
-	"os/exec"
 	"runtime/debug"
 	"sync"
-	"time"
 
 	"github.com/pterm/pterm"
 )
@@ -18,21 +14,11 @@ import (
 // Eulogist 函数是整个“赞颂者”程序的入口点
 func Eulogist() error {
 	var err error
-	var config *EulogistConfig
-	var neteaseConfigPath string
 	var waitGroup sync.WaitGroup
 	var client *Client.MinecraftClient
 	var server *Server.MinecraftServer
 	var clientWasConnected chan struct{}
 	var persistenceData *persistence_data.PersistenceData = new(persistence_data.PersistenceData)
-
-	// 读取配置文件
-	{
-		config, err = ReadEulogistConfig()
-		if err != nil {
-			return fmt.Errorf("Eulogist: %v", err)
-		}
-	}
 
 	// 使赞颂者连接到网易租赁服
 	{
@@ -40,10 +26,7 @@ func Eulogist() error {
 
 		server, err = Server.ConnectToServer(
 			Server.BasicConfig{
-				ServerCode:     config.RentalServerCode,
-				ServerPassword: config.RentalServerPassword,
-				AuthServer:     config.AuthServer,
-				McpAuthServer:  config.McpAuthServer,
+				AuthServer: "http://127.0.0.1:23551/",
 			},
 			persistenceData,
 		)
@@ -62,91 +45,23 @@ func Eulogist() error {
 		pterm.Success.Println("Success to create handshake with NetEase Minecraft Bedrock Rental Server.")
 	}
 
-	// 根据配置文件的启动类型决定启动方式
-	if config.LaunchType == LaunchTypeNormal {
-		// 初始化
-		var playerSkin *skin_process.Skin
-		var neteaseSkinFileName string
-		var skinIsSlim bool
-		var useAccountSkin bool
-		// 检查 Minecraft 客户端是否存在
-		nemcExist, err := FileExist(config.NEMCPath)
-		if err != nil {
-			return fmt.Errorf("Eulogist: %v", err)
-		}
-		if !nemcExist {
-			return fmt.Errorf("Eulogist: Client not found, maybe you did not download or the the path is incorrect")
-		}
-		// 取得皮肤数据
-		useCustomSkin, err := FileExist(config.SkinPath)
-		if err != nil {
-			return fmt.Errorf("Eulogist: %v", err)
-		}
-		playerSkin = server.PersistenceData.SkinData.NeteaseSkin
-		useAccountSkin = (!useCustomSkin && playerSkin != nil)
-		// 皮肤处理
-		if useAccountSkin {
-			// 生成皮肤文件
-			if skin_process.IsZIPFile(playerSkin.FullSkinData) {
-				neteaseSkinFileName = "skin.zip"
-			} else {
-				neteaseSkinFileName = "skin.png"
-			}
-			err = os.WriteFile(neteaseSkinFileName, playerSkin.FullSkinData, 0600)
-			if err != nil {
-				return fmt.Errorf("Eulogist: %v", err)
-			}
-			currentPath, _ := os.Getwd()
-			config.SkinPath = fmt.Sprintf(`%s\%s`, currentPath, neteaseSkinFileName)
-			// 皮肤纤细处理
-			skinIsSlim = playerSkin.SkinIsSlim
-		}
-		// 启动 Eulogist 服务器
-		client, clientWasConnected, err = Client.RunServer(persistenceData)
-		if err != nil {
-			return fmt.Errorf("Eulogist: %v", err)
-		}
-		defer client.Conn.CloseConnection()
-		// 生成网易配置文件
-		neteaseConfigPath, err = GenerateNetEaseConfig(config.SkinPath, skinIsSlim, client.Address.IP.String(), client.Address.Port)
-		if err != nil {
-			return fmt.Errorf("Eulogist: %v", err)
-		}
-		// 启动 Minecraft 客户端
-		command := exec.Command(config.NEMCPath, fmt.Sprintf("config=%s", neteaseConfigPath))
-		go command.Run()
-		// 打印准备完成的信息
-		pterm.Success.Println("Eulogist is ready! Now we are going to start Minecraft Client.\nThen, the Minecraft Client will connect to Eulogist automatically.")
-	} else {
-		// 启动 Eulogist 服务器
-		client, clientWasConnected, err = Client.RunServer(persistenceData)
-		if err != nil {
-			return fmt.Errorf("Eulogist: %v", err)
-		}
-		defer client.Conn.CloseConnection()
-		// 打印赞颂者准备完成的信息
-		pterm.Success.Printf(
-			"Eulogist is ready! Please connect to Eulogist manually.\nEulogist server address: %s:%d\n",
-			client.Address.IP.String(), client.Address.Port,
-		)
+	// 启动 Eulogist 服务器
+	client, clientWasConnected, err = Client.RunServer(persistenceData)
+	if err != nil {
+		return fmt.Errorf("Eulogist: %v", err)
 	}
-
+	defer client.Conn.CloseConnection()
+	// 打印赞颂者准备完成的信息
+	pterm.Success.Printf(
+		"Eulogist is ready! Please connect to Eulogist manually.\nEulogist server address: %s:%d\n",
+		client.Address.IP.String(), client.Address.Port,
+	)
 	// 等待 Minecraft 客户端与赞颂者完成基本数据包交换
 	{
 		// 等待 Minecraft 客户端连接
-		if config.LaunchType == LaunchTypeNormal {
-			timer := time.NewTimer(time.Second * 120)
-			defer timer.Stop()
-			select {
-			case <-timer.C:
-				return fmt.Errorf("Eulogist: Failed to create connection with Minecraft")
-			case <-clientWasConnected:
-				close(clientWasConnected)
-			}
-		} else {
-			<-clientWasConnected
-			close(clientWasConnected)
-		}
+		<-clientWasConnected
+		close(clientWasConnected)
+
 		pterm.Success.Println("Success to create connection with Minecraft Client, now we try to create handshake with it.")
 		// 等待 Minecraft 客户端完成握手
 		err = client.WaitClientHandshakeDown()

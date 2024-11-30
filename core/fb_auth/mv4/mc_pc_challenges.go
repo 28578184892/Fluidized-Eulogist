@@ -3,8 +3,9 @@ package fbauth
 import (
 	fb_client "Eulogist/core/fb_auth/mv4/client"
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"io"
+	"strconv"
 )
 
 // ...
@@ -14,39 +15,48 @@ type FNumRequest struct {
 
 // ...
 func TransferData(client *fb_client.Client, content string) string {
-	r, err := client.HttpClient.Get(fmt.Sprintf("%s/ModEngine/GetStartType?content=%s", client.AuthServer, content))
+
+	fmt.Println("The buffer need to transfor:", content)
+
+	resp, err := client.HttpClient.Post("http://127.0.0.1:23550/transfer", "application/json", bytes.NewBuffer([]byte(content)))
 	if err != nil {
 		panic(err)
 	}
-	resp := fb_client.AssertAndParse[map[string]any](r)
-	succ, _ := resp["success"].(bool)
-	if !succ {
-		err_m, _ := resp["message"].(string)
-		panic(fmt.Sprintf("Failed to transfer start type: %s", err_m))
+	defer resp.Body.Close() // 确保在函数结束时关闭响应体
+
+	// 读取返回的内容
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return ""
 	}
-	data, _ := resp["data"].(string)
-	return data
+
+	fmt.Println("The TransBuffer:" + string(body))
+
+	return string(body)
 }
 
 // ...
-func TransferCheckNum(client *fb_client.Client, data string) string {
-	rspreq := &FNumRequest{
-		Data: data,
-	}
-	msg, err := json.Marshal(rspreq)
-	if err != nil {
-		panic("Failed to encode json")
-	}
-	r, err := client.HttpClient.Post(fmt.Sprintf("%s/ModEngine/GetMcpCheckNum", client.AuthServer), "application/json", bytes.NewBuffer(msg))
+func TransferCheckNum(client *fb_client.Client, mcp string, salt string, localPlayerId int64, memcheck []any) string {
+
+	fmt.Println(localPlayerId)
+	cntnt := "{\"DynamicMcpShit\":\"" + salt + "\", \"PlayerId\":" + strconv.FormatInt(localPlayerId, 10) + ",\"DynamicMcpData\":\"" + mcp + "\"}"
+
+	fmt.Println("I will request as:", cntnt)
+	resp, err := client.HttpClient.Post("http://127.0.0.1:23550/checknum", "application/json", bytes.NewBuffer([]byte(cntnt)))
+
 	if err != nil {
 		panic(err)
 	}
-	resp := fb_client.AssertAndParse[map[string]any](r)
-	succ, _ := resp["success"].(bool)
-	if !succ {
-		err_m, _ := resp["message"].(string)
-		panic(fmt.Sprintf("Failed to transfer check num: %s", err_m))
+	defer resp.Body.Close() // 确保在函数结束时关闭响应体
+
+	// 读取返回的内容
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
 	}
-	val, _ := resp["value"].(string)
-	return val
+
+	fmt.Println("The TransBuffer:" + string(body))
+
+	return string(body)
 }
