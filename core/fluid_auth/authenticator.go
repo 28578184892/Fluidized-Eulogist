@@ -2,23 +2,33 @@ package authenticator
 
 import (
 	"Eulogist/core/minecraft/protocol"
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 )
+
+type AuthRequest struct {
+	PublicKey string `json:"identityPublicKey"`
+}
 
 var ServerIP = ""
 var ListenPort = "19132"
 
-const minecraftAuthURL = `http://127.0.0.1:23550/authentication`
+const FluidAuthBaseUrl = "http://127.0.0.1:23550/"
 
 func MakeAuthentication(ctx context.Context, buffer []byte) (string, error) {
-	body := `{"identityPublicKey":"` + base64.StdEncoding.EncodeToString(buffer) + `"}`
+	minecraftAuthURL := FluidAuthBaseUrl + "authentication"
 
-	request, _ := http.NewRequestWithContext(ctx, "POST", minecraftAuthURL, strings.NewReader(body))
+	authRequest := AuthRequest{
+		PublicKey: base64.StdEncoding.EncodeToString(buffer),
+	}
+	jsonData, _ := json.Marshal(authRequest)
+
+	request, _ := http.NewRequestWithContext(ctx, "POST", minecraftAuthURL, bytes.NewReader(jsonData))
 	request.Header.Set("Content-Type", "application/json")
 
 	request.Header.Set("User-Agent", "Fluid/GameService")

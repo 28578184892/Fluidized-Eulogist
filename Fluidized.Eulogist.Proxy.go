@@ -42,6 +42,4 @@ func main() {
 	}
 
 	fmt.Println()
-
-	fmt.Scanln()
 }
